@@ -1,0 +1,6 @@
+
+Npython:S1066 "/Merge this if statement with the enclosing one.(Ытй’8кэВќѕ.
+ppython:S101j"YRename class "Depth_Resize_MaxPool" to match the regular expression ^[A-Z_][a-zA-Z0-9]+$.(Гх­®
+jpython:S101ё"RRename class "Img_Normalize" to match the regular expression ^[A-Z_][a-zA-Z0-9]+$.(ХЮќп
+lpython:S101Ў"ORename class "Img_Adjust" to match the regular expression ^[A-Z_][a-zA-Z0-9]+$.(эьцрыяяяя
+tpython:S101\"XRename class "Img_Resize_Bilinear" to match the regular expression ^[A-Z_][a-zA-Z0-9]+$.(л°‹µюяяяя

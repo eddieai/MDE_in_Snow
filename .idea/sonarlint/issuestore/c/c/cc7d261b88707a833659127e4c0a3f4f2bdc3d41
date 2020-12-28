@@ -1,0 +1,6 @@
+
+npython:S117"RRename this parameter "SR_min" to match the regular expression ^[_a-z][a-z0-9_]*$.(üÂ˜Óÿÿÿÿÿ
+npython:S1542"QRename function "DROR_filter" to match the regular expression ^[a-z_][a-z0-9_]*$.(üÂ˜Óÿÿÿÿÿ
+opython:S117"SRename this parameter "show_3D" to match the regular expression ^[_a-z][a-z0-9_]*$.(üÂ˜Óÿÿÿÿÿ
+;python:S125
+"Remove this commented out code.(Ù÷¢áýÿÿÿÿ

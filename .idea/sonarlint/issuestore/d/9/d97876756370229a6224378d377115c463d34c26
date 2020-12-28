@@ -1,0 +1,15 @@
+
+Bpython:S125M"Remove this commented out code.(ÛúÍ£şÿÿÿÿ8ù²«çŞ.
+>python:S125í"Remove this commented out code.(šó¿‡8£ú†äæ.
+Cpython:S125“"Remove this commented out code.(ù‘Ì¦ùÿÿÿÿ8­ú“œà.
+>python:S125œ"Remove this commented out code.(šó¿‡8•‰”šå.
+opython:S1192É"JDefine a constant instead of duplicating this literal 'RGB image' 4 times.(Ì²Áıÿÿÿÿ8µÀğÇä.
+Bpython:S125u"Remove this commented out code.(Ñ×ìåüÿÿÿÿ8ù²«çŞ.
+ypython:S3776…"TRefactor this function to reduce its Cognitive Complexity from 36 to the 15 allowed.(…áÆ£şÿÿÿÿ8ù²«çŞ.
+>python:S125¨"Remove this commented out code.(úµí¢8ù²«çŞ.
+=python:S125`"Remove this commented out code.(¶áßš8ù²«çŞ.
+Bpython:S125P"Remove this commented out code.(ÛúÍ£şÿÿÿÿ8Ö¢Èæã.
+upython:S117ó"VRename this local variable "KLDiv" to match the regular expression ^[_a-z][a-z0-9_]*$.(’§Ã¾8µÀğÇä.
+=python:S125d"Remove this commented out code.(å”îÊ8ù²«çŞ.
+=python:S125Y"Remove this commented out code.(À˜ê8ù²«çŞ.
+Cpython:S125"Remove this commented out code.(ßÆ•äıÿÿÿÿ8ù²«çŞ.

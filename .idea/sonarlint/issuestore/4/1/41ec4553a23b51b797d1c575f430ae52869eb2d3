@@ -1,0 +1,4 @@
+
+{python:S117"_Rename this local variable "T_Lidar_Cuboid" to match the regular expression ^[_a-z][a-z0-9_]*$.(ЦґЏВьяяяя
+spython:S117"WRename this parameter "T_CAM_LIDAR" to match the regular expression ^[_a-z][a-z0-9_]*$.(Сй“Зьяяяя
+qpython:S117"URename this parameter "T_IMG_CAM" to match the regular expression ^[_a-z][a-z0-9_]*$.(Сй“Зьяяяя

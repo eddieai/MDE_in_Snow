@@ -17,6 +17,7 @@ class CADCDataset(Dataset):
                  cam0cover,
                  road_cover,
                  depth_mode,
+                 rescaled,
                  transform):
         self.transform = transform
 
@@ -28,7 +29,8 @@ class CADCDataset(Dataset):
                                      snow_level,
                                      cam0cover,
                                      road_cover,
-                                     depth_mode)
+                                     depth_mode,
+                                     rescaled)
 
     def __getitem__(self, idx):
         # load an item according to the given index
@@ -50,16 +52,19 @@ class DataGenerator(object):
                  cam0cover=None,
                  road_cover=None,
                  depth_mode='aggregated',
+                 rescaled=False,
                  high_gpu=True):
         self.phase = phase
+        self.rescaled = rescaled
+        self.depth_mode = depth_mode
         self.high_gpu = high_gpu
 
-        if not self.phase in ['train', 'test', 'val', 'small', 'all', 'inference']:
+        if not self.phase in ['train', 'test', 'val', 'small', 'all', 'inference', 'train_seq', 'val_seq', 'test_seq', 'all_seq']:
             raise ValueError("Panic::Invalid phase parameter")
         else:
             pass
 
-        transformer = Transformer(self.phase)
+        transformer = Transformer(self.phase, self.rescaled)
         self.dataset = CADCDataset(img_dir,
                                    depth_dir,
                                    phase,
@@ -68,13 +73,14 @@ class DataGenerator(object):
                                    cam0cover,
                                    road_cover,
                                    depth_mode,
+                                   rescaled,
                                    transformer.get_transform())
 
     def create_data(self, batch_size, nthreads=0):
         # use page locked gpu memory by default
         return DataLoader(self.dataset,
                           batch_size,
-                          shuffle=(self.phase == 'train' or self.phase == 'small'),
+                          shuffle=(self.phase in ['train', 'small', 'train_seq']),
                           num_workers=nthreads,
                           pin_memory=self.high_gpu,
                           drop_last=True)

@@ -4,7 +4,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 # from kitti.dataset import DataGenerator
 from cadc.dataset import DataGenerator
 import net
@@ -18,17 +18,19 @@ def train(model, optimizer, dataloader, loss_fn, metric_fn, param, current_epoch
 
     for i, data in enumerate(dataloader):
         img_batch = data['img']
-        depth_batch = data['depth']
-        # move to GPU if available
-        img_batch, depth_batch = img_batch.cuda(), depth_batch.cuda()
-
+        img_batch = img_batch.cuda()
         # compute model output
         output_batch = model(img_batch)
-
         # clear previous gradients, compute loss
         optimizer.zero_grad()
 
-        loss = loss_fn(output_batch, depth_batch, param['mode'], img=img_batch)
+        if param['train_depth_mode'] != 'pseudo_dror':
+            depth_batch = data['depth']
+            loss = loss_fn(output_batch.cpu(), depth_batch, param['mode'], img=img_batch).cuda()
+        else:
+            depth_dror = data['depth']
+            pseudo_label = data['pseudo']
+            loss = loss_fn(output_batch.cpu(), depth_dror, pseudo_label, lamda=1).cuda()
 
         loss.backward()
         # performs updates using calculated gradients
@@ -38,7 +40,12 @@ def train(model, optimizer, dataloader, loss_fn, metric_fn, param, current_epoch
             print('Train: epoch %d iter %d loss: %.3f' % (current_epoch, i, loss))
             writer.add_scalar('training loss', loss, current_epoch * len(dataloader) + i)
 
-            output_batch, depth_batch = output_batch.cpu().detach().numpy(), depth_batch.cpu().detach().numpy()
+            if param['train_depth_mode'] != 'pseudo_dror':
+                output_batch, depth_batch = output_batch.cpu().detach().numpy(), depth_batch.numpy()
+            else:
+                output_batch, depth_dror, pseudo_label = output_batch.cpu().detach().numpy(), depth_dror.numpy(), pseudo_label.numpy()
+                depth_batch = np.where(depth_dror != 0, depth_dror, pseudo_label)
+
             pred_batch = net.depth_inference(output_batch, param['mode'])
             metrics = metric_fn(pred_batch, depth_batch)
             # for metric, value in metrics.items():
@@ -64,25 +71,28 @@ def train(model, optimizer, dataloader, loss_fn, metric_fn, param, current_epoch
     print('\n------ After training %d epochs, train set metrics mean: ------ \n%s\n' % (current_epoch, metrics_train))
 
 
-def train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val, loss_fn, metric_fn, model_dir, param):
+def train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val, model_dir, param):
     best_SILog_val = float('inf')
     epoch_start = param['current_epoch']
 
+    loss_fn = net.loss_fn if param['train_depth_mode'] != 'pseudo_dror' else net.loss_fn_pseudo
+    metric_fn = net.metric_fn
+
     for epoch in range(epoch_start, param['epochs']):
-        print()
+        print('model_dir = %s\n' % model_dir)
         print('------ Epoch %d, Learning rate = %.2e ------' % (epoch, optimizer.param_groups[0]['lr']))
         train(model, optimizer, dataloader_train, loss_fn, metric_fn, param, epoch)
 
         # metrics_test = evaluate(model, dataloader_val, loss_fn, metric_fn, param, epoch, writer)
         if isinstance(dataloader_val, dict):
-            metrics_val_current = evaluate(model, dataloader_val['current'], loss_fn, metric_fn, param, epoch, writer)
+            metrics_val_current = evaluate(model, dataloader_val['current'], metric_fn, param, epoch, writer)
             metrics_val_current = {k + '_val_current': v for k, v in metrics_val_current.items()}
             print(
                 '\n------ After training %d epochs, current snowfall\'s validation set metrics mean: ------ \n%s\n' % (epoch, metrics_val_current))
             for metric, value in metrics_val_current.items():
                 writer.add_scalar(metric, value, epoch)
 
-            metrics_val_all = evaluate(model, dataloader_val['all'], loss_fn, metric_fn, param, epoch, writer)
+            metrics_val_all = evaluate(model, dataloader_val['all'], metric_fn, param, epoch, writer)
             metrics_val_all = {k + '_val_all': v for k, v in metrics_val_all.items()}
             print(
                 '\n------ After training %d epochs, all CADC validation set metrics mean: ------ \n%s\n' % (epoch, metrics_val_all))
@@ -93,7 +103,7 @@ def train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val
             SILog_val = metrics_val_current['SILog_val_current']
 
         else:
-            metrics_val = evaluate(model, dataloader_val, loss_fn, metric_fn, param, epoch, writer)
+            metrics_val = evaluate(model, dataloader_val, metric_fn, param, epoch, writer)
             print(
                 '\n------ After training %d epochs, validation set metrics mean: ------ \n%s\n' % (epoch, metrics_val))
             for metric, value in metrics_val.items():
@@ -132,19 +142,24 @@ def train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val
 if __name__ == '__main__':
     param = {
         'phase': 'train',
-        'batch_size': 3,
+        'rescaled': True,   # Attention!
+        'batch_size': 12,   # 3 if rescaled is False, 12 if True
         'eval_n_crop': 4,
         'learning_rate': 1e-3,
         'momentum': 0.9,
         'weight_decay': 0,
         'epochs': 40,
-        'mode': 'sord_ent_weighted'   # sord, sord_ent_weighted, sord_min_local_ent, sord_weighted_minent, sord_align_grad, classification, regression, reg_of_cls
+        'mode': 'sord'   # sord, sord_ent_weighted, sord_min_local_ent, sord_weighted_minent, sord_align_grad, classification, regression, reg_of_cls
     }
-    restore_file = "experiments/train_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_PascalVOC_crop_375*513/best.pth.tar"
-    model_dir = 'refine_CADC_depth_aggregated_new_sord_weighted_sigmoid_16x16_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti_crop_513*513'
-    train_type = 'refine'  # refine or continue
+    train_type = 'train'  # train, refine or continue
+    model_dir = 'refine_CADC_rescaled_seq_pseudo_Kitti_val_dror_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti'
 
-    model = net.get_model(param['mode'])
+    if train_type == 'refine':
+        restore_file = 'experiments/train_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_PascalVOC_crop_375*513/best.pth.tar'
+    elif train_type == 'continue':
+        restore_file = 'experiments/%s/last.pth.tar' % model_dir
+
+    model = net.get_model(param['mode'], pretrained=False)
     model.cuda()
 
     ## Pretrained on Pascal semantic segmentation, retrain on Kitti depth estimation
@@ -161,10 +176,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.SGD(params=model.parameters(), lr=param['learning_rate'], momentum=param['momentum'], weight_decay=param['weight_decay'], nesterov=True)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2)
 
+    param['current_epoch'] = 0
     if restore_file is not None:
         if train_type == 'refine':
             load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
-            param['current_epoch'] = 0
         elif train_type == 'continue':
             load_dict = utils.load_checkpoint(restore_file, model, optimizer=optimizer, scheduler=scheduler)
             assert 'current_epoch' in load_dict, "current_epoch does not exist in restore file"
@@ -186,8 +201,9 @@ if __name__ == '__main__':
 
     # data_gen_train = DataGenerator('/home/datasets/Kitti/', phase=param['phase'])
     data_gen_train = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/',
-                                   phase='train', cam=0, depth_mode='aggregated')
+                                   phase='train_seq', cam=0, depth_mode='pseudo_Kitti', rescaled=param['rescaled'])
     print('train data size:', len(data_gen_train.dataset))
+    param['train_depth_mode'] = data_gen_train.depth_mode
     dataloader_train = data_gen_train.create_data(batch_size=param['batch_size'])
     data = next(iter(dataloader_train))
     print('img shape:', data['img'].shape)
@@ -195,8 +211,9 @@ if __name__ == '__main__':
 
     # data_gen_val = DataGenerator('/home/datasets/Kitti/', phase='test')
     data_gen_val = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/',
-                                 phase='val', cam=0, depth_mode='aggregated')
+                                 phase='val_seq', cam=0, depth_mode='dror', rescaled=param['rescaled'])
     print('val data size:', len(data_gen_val.dataset))
+    param['val_depth_mode'] = data_gen_val.depth_mode
     dataloader_val = data_gen_val.create_data(batch_size=param['batch_size'])
 
     # # Eval on both current corresponding snowfall val set & all CADC val set
@@ -210,4 +227,4 @@ if __name__ == '__main__':
     #
     # dataloader_val = {'current': dataloader_val_current, 'all': dataloader_val_all}
 
-    train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val, net.loss_fn, net.metric_fn, model_dir, param)
+    train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val, model_dir, param)

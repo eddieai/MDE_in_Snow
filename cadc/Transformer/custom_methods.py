@@ -28,6 +28,10 @@ class ToPIL(BaseMethod):
             data_item['img'] = self.to_pil(self.img)
         if not self._is_pil_image(self.depth):
             data_item['depth'] = self.to_pil(self.depth)
+
+        if 'pseudo' in data_item:
+            if not self._is_pil_image(self.pseudo):
+                data_item['pseudo'] = self.to_pil(self.pseudo)
         if 'depth_interp' in data_item:
             if not self._is_pil_image(self.depth_interp):
                 data_item['depth_interp'] = self.to_pil(self.depth_interp)
@@ -47,6 +51,8 @@ class ToTensor(BaseMethod):
             data_item['img'] = self.totensor(self.img)
         if self.mode in ["pair", "depth"]:
             data_item['depth'] = self.totensor(self.depth).squeeze()
+            if 'pseudo' in data_item:
+                data_item['pseudo'] = self.totensor(self.pseudo).squeeze()
             if 'depth_interp' in data_item:
                 data_item['depth_interp'] = self.totensor(self.depth_interp).squeeze()
 
@@ -56,13 +62,16 @@ class ToTensor(BaseMethod):
 class Crop(BaseMethod):
     def __init__(self, top, left, height, width):
         BaseMethod.__init__(self)
+        self.height = height
         self.crop_pil_func = lambda pil: F.crop(pil, top, left, height, width)
 
     def __call__(self, data_item):
         self.set_data(data_item)
 
         data_item['img'] = self.crop_pil_func(self.img)
-        data_item['depth'] = self.crop_pil_func(self.depth)
+        if self.depth.size[1] > self.height:
+            data_item['depth'] = self.crop_pil_func(self.depth)
+
         if 'depth_interp' in data_item:
             data_item['depth_interp'] = self.crop_pil_func(self.depth_interp)
 
@@ -83,6 +92,8 @@ class RandomCrop(BaseMethod):
 
         data_item['img'] = randomcrop_func(self.img)
         data_item['depth'] = randomcrop_func(self.depth)
+        if 'pseudo' in data_item:
+            data_item['pseudo'] = randomcrop_func(self.pseudo)
         if 'depth_interp' in data_item:
             data_item['depth_interp'] = randomcrop_func(self.depth_interp)
 
@@ -112,6 +123,8 @@ class Depth_Resize_MaxPool(BaseMethod):
         self.set_data(data_item)
 
         data_item['depth'] = self.scale(self.depth[None, ...]).squeeze()
+        if 'pseudo' in data_item:
+            data_item['pseudo'] = self.scale(self.pseudo[None, ...]).squeeze()
         if 'depth_interp' in data_item:
             data_item['depth_interp'] = self.scale(self.depth_interp[None, ...]).squeeze()
 
@@ -128,7 +141,8 @@ class RandomHorizontalFlip(BaseMethod):
         if random.random() < 0.5:
             data_item['img'] = self.img.transpose(Image.FLIP_LEFT_RIGHT)
             data_item['depth'] = self.depth.transpose(Image.FLIP_LEFT_RIGHT)
-
+            if 'pseudo' in data_item:
+                data_item['pseudo'] = self.pseudo.transpose(Image.FLIP_LEFT_RIGHT)
             if 'depth_interp' in data_item:
                 data_item['depth_interp'] = self.depth_interp.transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -151,7 +165,8 @@ class RandomRotate(BaseMethod):
             rotate_pil = self.rotate_pil_func()
             data_item['img'] = rotate_pil(self.img, Image.BICUBIC)
             data_item['depth'] = rotate_pil(self.depth, Image.BILINEAR)
-
+            if 'pseudo' in data_item:
+                data_item['pseudo'] = rotate_pil(self.pseudo, Image.BILINEAR)
             if 'depth_interp' in data_item:
                 data_item['depth_interp'] = rotate_pil(self.depth_interp, Image.BILINEAR)
 

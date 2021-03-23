@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import numpy as np
 import torch
@@ -10,7 +10,7 @@ import net
 import utils
 
 
-def evaluate(model, dataloader, loss_fn, metric_fn, param, current_epoch, writer):
+def evaluate(model, dataloader, metric_fn, param, current_epoch, writer):
     model.eval()
     summary = []
 
@@ -60,11 +60,11 @@ def evaluate(model, dataloader, loss_fn, metric_fn, param, current_epoch, writer
 
 
 if __name__ == '__main__':
-    model_dir = "experiments/refine_CADC_cam0Cover_lr_3e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_CADC_cam0NoCover/best.pth.tar"
+    model_dir = "experiments/refine2_CADC_seq_depth_aggregated_corrected_HPR_ProjectedKNN_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti/best.pth.tar"
 
     param = torch.load(model_dir).copy()
-    param['eval_n_crop'] = 4
-    param['batch_size'] = 3
+    # param['eval_n_crop'] = 4
+    # param['batch_size'] = 3
     param.pop('state_dict')
     param.pop('optim_dict')
     param.pop('sched_dict', None)
@@ -73,11 +73,11 @@ if __name__ == '__main__':
 
     # writer = SummaryWriter('runs/' + model_dir.split('/')[1].strip().replace('train', 'test'))
     # writer = SummaryWriter('runs/test_lr_%.2e_wd_%.2e_epoch_%d_mode_%s' % (param['learning_rate'], param['weight_decay'], param['epochs'], param['mode']))
-    writer = SummaryWriter('runs/test_refine_CADC_cam0Cover_lr_3e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_CADC_cam0NoCover/')
+    writer = SummaryWriter('runs/test_aggregated_3_refine2_CADC_seq_depth_aggregated_corrected_HPR_ProjectedKNN_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti/')
 
     # data_gen_test = DataGenerator('/home/datasets/Kitti/', phase='test')
-    data_gen_test = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/', phase='test',
-                                  depth_mode='dror', cam=0)
+    data_gen_test = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/', phase='test_seq',
+                                  depth_mode='aggregated_3', cam=0)
     print('val or test data size:', len(data_gen_test.dataset))
     dataloader_test = data_gen_test.create_data(batch_size=param['batch_size'])
     data = next(iter(dataloader_test))
@@ -90,10 +90,10 @@ if __name__ == '__main__':
     utils.load_checkpoint(model_dir, model)
     print('Load model parameters done')
 
-    metrics_mean = evaluate(model, dataloader_test, net.loss_fn, net.metric_fn, param, param['current_epoch'], writer)
+    metrics_mean = evaluate(model, dataloader_test, net.metric_fn, param, param['current_epoch'], writer)
     print('------ Test set metrics mean: ------ \n%s\n' % metrics_mean)
 
     # save_path = os.path.join(os.path.dirname(model_dir), 'metrics_test.json')
-    save_path = os.path.join(os.path.dirname(model_dir), 'test_depth_dror.json')
+    save_path = os.path.join(os.path.dirname(model_dir), 'test_seq_depth_aggregated_3.json')
     utils.save_dict_to_json(metrics_mean, save_path)
     print('Save metrics of test set done')

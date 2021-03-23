@@ -4,11 +4,15 @@ import shutil
 import json
 import numpy as np
 import torch
-import matplotlib
-matplotlib.use('Agg')
+from net import b
 
 
 def show_result(data, pred, aux_map, error_map, batch_size=10, shuffle=True):       # change to any list of maps [img, depth, pred, aux_map, error_map]
+    img = data['img']
+    depth = data['depth']
+    if 'pseudo' in data:
+        depth = torch.where(data['depth'] != 0, data['depth'], data['pseudo'])
+        
     if batch_size > 4:
         if shuffle:
             sample = np.arange(batch_size)
@@ -19,18 +23,18 @@ def show_result(data, pred, aux_map, error_map, batch_size=10, shuffle=True):   
         if aux_map is None:
             fig, axes = plt.subplots(5, 4, figsize=(20, 10))
             for i, idx in enumerate(sample):
-                axes[0, i].imshow(data['img'][idx].cpu().permute(1, 2, 0))
-                axes[1, i].imshow(data['depth'][idx].cpu(), cmap='jet')
-                axes[2, i].imshow(pred[idx], cmap='jet')
+                axes[0, i].imshow(img[idx].permute(1, 2, 0))
+                axes[1, i].imshow(depth[idx].clamp(0, b), cmap='jet', vmin=0, vmax=80)
+                axes[2, i].imshow(pred[idx].clip(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[3, i].imshow(error_map[0][idx], cmap='viridis', vmin=0, vmax=80)
                 axes[4, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=10)
         else:
             fig, axes = plt.subplots(6, 4, figsize=(20, 12))
             for i, idx in enumerate(sample):
-                axes[0, i].imshow(data['img'][idx].cpu().permute(1, 2, 0))
-                axes[1, i].imshow(data['depth'][idx].cpu(), cmap='jet')
+                axes[0, i].imshow(img[idx].permute(1, 2, 0))
+                axes[1, i].imshow(depth[idx].clamp(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[2, i].imshow(aux_map[idx], cmap='gray')
-                axes[3, i].imshow(pred[idx], cmap='jet')
+                axes[3, i].imshow(pred[idx].clip(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[4, i].imshow(error_map[0][idx], cmap='viridis', vmin=0, vmax=80)
                 axes[5, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=10)
 
@@ -39,37 +43,37 @@ def show_result(data, pred, aux_map, error_map, batch_size=10, shuffle=True):   
         if aux_map is None:
             fig, axes = plt.subplots(5, batch_size, figsize=(batch_size * 5, 10))
             for i, idx in enumerate(sample):
-                axes[0, i].imshow(data['img'][idx].cpu().permute(1, 2, 0))
-                axes[1, i].imshow(data['depth'][idx].cpu(), cmap='jet')
-                axes[2, i].imshow(pred[idx], cmap='jet')
+                axes[0, i].imshow(img[idx].permute(1, 2, 0))
+                axes[1, i].imshow(depth[idx].clamp(0, b), cmap='jet', vmin=0, vmax=80)
+                axes[2, i].imshow(pred[idx].clip(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[3, i].imshow(error_map[0][idx], cmap='viridis', vmin=0, vmax=80)
-                axes[4, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=1)
+                axes[4, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=10)
         else:
             fig, axes = plt.subplots(6, batch_size, figsize=(batch_size * 5, 12))
             for i, idx in enumerate(sample):
-                axes[0, i].imshow(data['img'][idx].cpu().permute(1, 2, 0))
-                axes[1, i].imshow(data['depth'][idx].cpu(), cmap='jet')
+                axes[0, i].imshow(img[idx].permute(1, 2, 0))
+                axes[1, i].imshow(depth[idx].clamp(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[2, i].imshow(aux_map[idx], cmap='gray')
-                axes[3, i].imshow(pred[idx], cmap='jet')
+                axes[3, i].imshow(pred[idx].clip(0, b), cmap='jet', vmin=0, vmax=80)
                 axes[4, i].imshow(error_map[0][idx], cmap='viridis', vmin=0, vmax=80)
-                axes[5, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=1)
+                axes[5, i].imshow(error_map[1][idx], cmap='viridis', vmin=0, vmax=10)
 
     elif batch_size == 1:
         if aux_map is None:
             fig, axes = plt.subplots(5, 1, figsize=(5, 10))
-            axes[0].imshow(data['img'][0].cpu().permute(1, 2, 0))
-            axes[1].imshow(data['depth'][0].cpu(), cmap='jet')
-            axes[2].imshow(pred[0], cmap='jet')
+            axes[0].imshow(img[0].permute(1, 2, 0))
+            axes[1].imshow(depth[0].clamp(0, b), cmap='jet', vmin=0, vmax=80)
+            axes[2].imshow(pred[0].clip(0, b), cmap='jet', vmin=0, vmax=80)
             axes[3].imshow(error_map[0][0], cmap='viridis', vmin=0, vmax=80)
-            axes[4].imshow(error_map[1][0], cmap='viridis', vmin=0, vmax=1)
+            axes[4].imshow(error_map[1][0], cmap='viridis', vmin=0, vmax=10)
         else:
             fig, axes = plt.subplots(6, 1, figsize=(5, 12))
-            axes[0].imshow(data['img'][0].cpu().permute(1, 2, 0))
-            axes[1].imshow(data['depth'][0].cpu(), cmap='jet')
+            axes[0].imshow(img[0].permute(1, 2, 0))
+            axes[1].imshow(depth[0].clamp(0, b), cmap='jet', vmin=0, vmax=80)
             axes[2].imshow(aux_map[0], cmap='gray')
-            axes[3].imshow(pred[0], cmap='jet')
+            axes[3].imshow(pred[0].clip(0, b), cmap='jet', vmin=0, vmax=80)
             axes[4].imshow(error_map[0][0], cmap='viridis', vmin=0, vmax=80)
-            axes[5].imshow(error_map[1][0], cmap='viridis', vmin=0, vmax=1)
+            axes[5].imshow(error_map[1][0], cmap='viridis', vmin=0, vmax=10)
 
     return fig
 

@@ -6,8 +6,9 @@ class BaseTransformer(ABC):
     This class is an abstract transformer, one can override transform methods.
     The subclass need the implementation of the following methods.
     """
-    def __init__(self, phase):
+    def __init__(self, phase, rescaled):
         self.phase = phase
+        self.rescaled = rescaled
 
     @abstractmethod
     def get_joint_transform(self):

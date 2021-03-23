@@ -12,20 +12,18 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 
-def lidar_aggregate(lidars_no_mobile, cuboid_aggregated, poses, show_3D=False):
-    n_aggregate = len(lidars_no_mobile)
-    ref_frame = n_aggregate//2
+def lidar_aggregate(ref_frame, lidars_no_mobile, cuboid_aggregated, poses, show_3D=False):
     rotation_ref, translation_ref = poses[ref_frame]
 
     lidar_aggregated = cuboid_aggregated
 
     if show_3D:
         cmap = plt.get_cmap('YlGnBu')
-        norm = colors.Normalize(vmin=0, vmax=n_aggregate)
+        norm = colors.Normalize(vmin=0, vmax=len(lidars_no_mobile))
         scalarMap = cm.ScalarMappable(norm=norm, cmap=cmap)
         lidar_colors = np.broadcast_to(np.array([1,0,0]), (len(cuboid_aggregated),3))
 
-    for frame in range(n_aggregate):
+    for frame in range(len(lidars_no_mobile)):
         lidar_no_mobile = lidars_no_mobile[frame]
 
         rotation, translation = poses[frame]
@@ -159,7 +157,9 @@ if __name__ == '__main__':
 
         min_frame = max(0, frame - (n_aggregate - 1) // 2)
         max_frame = min(len(lidars_no_mobile), frame + (n_aggregate - 1) // 2 + 1)
-        lidar_aggregated = lidar_aggregate(lidars_no_mobile[min_frame:max_frame], cuboid_aggregated, poses[min_frame:max_frame], show_3D=show_3D)
+        ref_frame = min(frame, (n_aggregate - 1) // 2)
+
+        lidar_aggregated = lidar_aggregate(ref_frame, lidars_no_mobile[min_frame:max_frame], cuboid_aggregated, poses[min_frame:max_frame], show_3D=show_3D)
 
         # if show_cam0 or show_allcam:
         #     allcam_img = []

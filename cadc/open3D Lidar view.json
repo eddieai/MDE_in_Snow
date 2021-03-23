@@ -1,0 +1,19 @@
+{
+	"class_name" : "ViewTrajectory",
+	"interval" : 29,
+	"is_loop" : false,
+	"trajectory" : 
+	[
+		{
+			"boundingbox_max" : [ 210.67100481086933, 93.193808799144762, 14.779659439305854 ],
+			"boundingbox_min" : [ 2.3301183850834657, -119.92428569727741, -3.7529046194975502 ],
+			"field_of_view" : 60.0,
+			"front" : [ -1, 0, 0 ],
+			"lookat" : [ 0, 0, 0 ],
+			"up" : [ 0, 0, 1 ],
+			"zoom" : 0.000001
+		}
+	],
+	"version_major" : 1,
+	"version_minor" : 0
+}

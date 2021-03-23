@@ -17,6 +17,9 @@ class BaseMethod(object):
         self.img = data_item['img']
         self.depth = data_item['depth']
 
+        if 'pseudo' in data_item:
+            self.pseudo = data_item['pseudo']
+
         if 'depth_interp' in data_item:
             self.depth_interp = data_item['depth_interp']
 

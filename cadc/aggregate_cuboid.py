@@ -6,11 +6,13 @@ import open3d as o3d
 from cadc_utils import load_annotation
 
 
-def cuboid_aggregate(lidars, annotations):
+def cuboid_aggregate(ref_frame, lidars_dror, annotations, show3D=False):
+    annotation_ref = annotations[ref_frame]
+
     agg_cuboids = {}
 
-    for frame in trange(len(annotations)):
-        lidar = lidars[frame][:, :3]
+    for frame in range(len(lidars_dror)):
+        lidar = lidars_dror[frame][:, :3]
         # print('Aggregating cuboids of frame %d' % (frame))
         annotation = annotations[frame]
 
@@ -40,13 +42,9 @@ def cuboid_aggregate(lidars, annotations):
                 else:
                     agg_cuboids[cuboid['uuid']] = cuboid_points
 
-    return agg_cuboids
+    cuboid_aggregated = np.zeros((0,3))
 
-
-def agg_cuboid_to_frame(agg_cuboids, annotation, show3D=False):
-    point_cloud = np.zeros((0,3))
-
-    for cuboid in annotation['cuboids']:
+    for cuboid in annotation_ref['cuboids']:
         if not cuboid['stationary']:
             uuid = cuboid['uuid']
             yaw = cuboid['yaw']
@@ -59,22 +57,24 @@ def agg_cuboid_to_frame(agg_cuboids, annotation, show3D=False):
             agg_cuboid = agg_cuboids[uuid]
             agg_cuboid_transformed = np.dot(np.c_[agg_cuboid, np.ones(len(agg_cuboid))], transformation_cuboid.T)[:, :3]
 
-            point_cloud = np.vstack((point_cloud, agg_cuboid_transformed))
+            cuboid_aggregated = np.vstack((cuboid_aggregated, agg_cuboid_transformed))
 
     if show3D:
-        point_cloud_3d = o3d.geometry.PointCloud()
-        point_cloud_3d.points = o3d.utility.Vector3dVector(point_cloud)
-        o3d.visualization.draw_geometries([point_cloud_3d])
+        cuboid_aggregated_3d = o3d.geometry.PointCloud()
+        cuboid_aggregated_3d.points = o3d.utility.Vector3dVector(cuboid_aggregated)
+        o3d.visualization.draw_geometries([cuboid_aggregated_3d])
 
-    return point_cloud
+    return cuboid_aggregated
 
 
 if __name__ == '__main__':
     BASE = '/home/datasets/CADC/cadcd/'
     BASE_mod = '/home/datasets_mod/CADC/cadcd/'
     date = '2019_02_27'     # '2019_02_27'
-    seq = 20     # 20
-    start_frame = 15
+    seq = 27     # 20
+    start_frame = 0
+    n_aggregate = 11  # n_aggregate % 2 == 1
+    assert n_aggregate % 2 == 1
 
     annotations_path = BASE + date + '/' + format(seq, '04') + "/3d_ann.json"
     annotations = load_annotation(annotations_path)
@@ -87,10 +87,9 @@ if __name__ == '__main__':
         lidar_dror = np.load(lidar_dror_path).reshape((-1, 4))
         lidars_dror.append(lidar_dror)
 
-    # agg_cuboids = cuboid_aggregate(lidars_dror, annotations)
-    agg_cuboids_path = BASE_mod + date + '/' + format(seq, '04') + \
-                       "/labeled/lidar_points/cuboid_aggregated/agg_cuboids.npy"
-    agg_cuboids = np.load(agg_cuboids_path, allow_pickle=True).item()
-
     for frame in trange(start_frame, len(annotations)):
-        point_cloud = agg_cuboid_to_frame(agg_cuboids, annotations[frame], show3D=True)
+        min_frame = max(0, frame - (n_aggregate - 1) // 2)
+        max_frame = min(len(lidars_dror), frame + (n_aggregate - 1) // 2 + 1)
+        ref_frame = min(frame, (n_aggregate - 1) // 2)
+
+        cuboid_aggregated = cuboid_aggregate(ref_frame, lidars_dror[min_frame:max_frame], annotations[min_frame:max_frame], show3D=True)

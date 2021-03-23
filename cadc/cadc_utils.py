@@ -4,6 +4,10 @@ import numpy as np
 import utm
 import yaml
 import json
+import open3d as o3d
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 h, w = 1024, 1280
 
@@ -105,3 +109,17 @@ def load_calibration(calib_path):
     calib['CAM07'] = yaml.load(open(calib_path + '/07.yaml'), yaml.SafeLoader)
 
     return calib
+
+
+def visualize_3d(lidar, color=True):
+    lidar_3d = o3d.geometry.PointCloud()
+    lidar_3d.points = o3d.utility.Vector3dVector(lidar)
+    if color:
+        cmap = plt.get_cmap('jet')
+        norm = colors.Normalize(vmin=0, vmax=80)
+        scalarMap = cm.ScalarMappable(norm=norm, cmap=cmap)
+        lidar_colors = scalarMap.to_rgba(lidar[:, 0])[:, :3]
+        lidar_3d.colors = o3d.utility.Vector3dVector(lidar_colors)
+    else:
+        lidar_3d.colors = o3d.utility.Vector3dVector(np.ones((len(lidar), 3)) * 0.5)
+    o3d.visualization.draw_geometries([lidar_3d])

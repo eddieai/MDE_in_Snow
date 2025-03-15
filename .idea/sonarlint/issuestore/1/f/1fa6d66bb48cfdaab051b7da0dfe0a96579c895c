@@ -1,4 +1,0 @@
-
-kpython:S2208"GImport only needed names or import the module and then use its members.(Ûì±ƒúÿÿÿÿ8¼ğÿ½å.
-Bpython:S125Z"Remove this commented out code.(›Äæšıÿÿÿÿ8¢ÏÓÉå.
-ppython:S117."RRename this parameter "show3D" to match the regular expression ^[_a-z][a-z0-9_]*$.(‘¨È8îá‘½å.

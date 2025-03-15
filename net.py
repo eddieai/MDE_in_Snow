@@ -223,35 +223,35 @@ def loss_fn(output, depth, mode, img=None):
             criterion = nn.KLDivLoss(reduction='batchmean')
             return criterion(log_p, gt_sord)
 
-        # elif mode == 'sord_ent_weighted':
-        #     # KLDivergence loss weighted according to ground truth depthmap local entropy
-        #     ## entropy kernel 16x16
-        #     gt_entropy = torch.Tensor(local_entropy(depth.cpu().numpy(), kernel=16, mask=True)).cuda()
-        #
-        #     if VISUALIZE_sord_ent_weighted:
-        #         for i in range(output.size()[0]):
-        #             fig = plt.figure(i)
-        #             plt.cla()
-        #             plt.axis('off')
-        #             axes = fig.subplots(1, 3, sharex=True, sharey=True)
-        #             axes[0].imshow(img[i].cpu().permute(1, 2, 0))
-        #             axes[0].set_title('RGB image')
-        #             axes[1].imshow(depth[i].cpu().numpy(), cmap='jet')
-        #             axes[1].set_title('Depth map (ground truth)')
-        #             axes[2].imshow(gt_entropy[i].cpu().numpy(), cmap='gray')
-        #             axes[2].set_title('Depth map Entropy')
-        #             plt.pause(0.1)
-        #             plt.show()
-        #
-        #     gt_entropy_mask = gt_entropy[mask]
-        #     ## linear
-        #     # weight_by_entropy = torch.clamp(1 - gt_entropy_mask / 6, min=0)         ## entropy kernel 16x16, divide by 6; entropy kernel 3x3, divide by 3
-        #     # weight_by_entropy = 1 - gt_entropy_mask / gt_entropy_mask.max()
-        #     ## sigmoid
-        #     weight_by_entropy = 1 - F.sigmoid(gt_entropy_mask)
-        #
-        #     KLDiv = torch.sum(F.kl_div(log_p, gt_sord, reduction='none'), dim=1)
-        #     return torch.sum(KLDiv * weight_by_entropy) / torch.sum(weight_by_entropy)
+        elif mode == 'sord_ent_weighted':
+            # KLDivergence loss weighted according to ground truth depthmap local entropy
+            ## entropy kernel 16x16
+            gt_entropy = torch.Tensor(local_entropy(depth.cpu().numpy(), kernel=16, mask=True))
+
+            if VISUALIZE_sord_ent_weighted:
+                for i in range(output.size()[0]):
+                    fig = plt.figure(i)
+                    plt.cla()
+                    plt.axis('off')
+                    axes = fig.subplots(1, 3, sharex=True, sharey=True)
+                    axes[0].imshow(img[i].cpu().permute(1, 2, 0))
+                    axes[0].set_title('RGB image')
+                    axes[1].imshow(depth[i].cpu().numpy(), cmap='jet')
+                    axes[1].set_title('Depth map (ground truth)')
+                    axes[2].imshow(gt_entropy[i].cpu().numpy(), cmap='gray')
+                    axes[2].set_title('Depth map Entropy')
+                    plt.pause(0.1)
+                    plt.show()
+
+            gt_entropy_mask = gt_entropy[mask]
+            ## linear
+            # weight_by_entropy = torch.clamp(1 - gt_entropy_mask / 6, min=0)         ## entropy kernel 16x16, divide by 6; entropy kernel 3x3, divide by 3
+            # weight_by_entropy = 1 - gt_entropy_mask / gt_entropy_mask.max()
+            ## sigmoid
+            weight_by_entropy = 1 - F.sigmoid(gt_entropy_mask)
+
+            KLDiv = torch.sum(F.kl_div(log_p, gt_sord, reduction='none'), dim=1)
+            return torch.sum(KLDiv * weight_by_entropy) / torch.sum(weight_by_entropy)
         #
         # elif mode == 'sord_min_local_ent':
         #     # Normal KLDivergence loss

@@ -23,7 +23,7 @@ class CADCloader(object):
         self.snow_level = snow_level
         self.cam0cover = cam0cover
         self.road_cover = road_cover
-        assert depth_mode in ['raw', 'dror', 'aggregated', 'HPR_3DBox', 'HPR_ConvexHull', 'HPR_ProjectedKNN', 'HPR_ProjectedKNN_0.99', 'aggregated_3', 'pseudo_dror', 'pseudo', 'pseudo_Kitti']
+        assert depth_mode in ['raw', 'dror', 'aggregated', 'HPR_3DBox', 'HPR_ConvexHull', 'HPR_ProjectedKNN', 'HPR_ProjectedKNN_0.99', 'aggregated_3', 'pseudo_dror', 'pseudo', 'pseudo_Kitti', 'dror_ProjectedKNN']
         self.depth_mode = depth_mode
         self.rescaled = rescaled
         self.files = []

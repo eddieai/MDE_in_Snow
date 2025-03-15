@@ -17,14 +17,15 @@ cadc_stats = pd.read_csv('cadc_dataset_route_stats.csv', header=0, usecols=[0, 1
 start_row = 0
 
 generate_DROR = False
+generate_DROR_ProjectedKNN = True
 generate_no_dynamic = False
-aggregate_cuboid_3 = True
-aggregate_lidar_3 = True
-aggregate_cuboid = True
-aggregate_lidar = True
-aggregate_HPR_ProjectedKNN = True
-aggregate_HPR_ProjectedKNN_99 = True
-aggregate_HPR_ConvexHull = True
+aggregate_cuboid_3 = False
+aggregate_lidar_3 = False
+aggregate_cuboid = False
+aggregate_lidar = False
+aggregate_HPR_ProjectedKNN = False
+aggregate_HPR_ProjectedKNN_99 = False
+aggregate_HPR_ConvexHull = False
 aggregate_HPR_3DBox = False  # not yet relaunched after correcting dynamic object aggregation
 
 
@@ -65,6 +66,28 @@ for row in trange(start_row, len(cadc_stats)):
             if not (os.path.exists(lidar_dror_path[:-14])):
                 os.makedirs(lidar_dror_path[:-14])
             np.save(lidar_dror_path, lidar_dror)
+
+    if generate_DROR_ProjectedKNN:
+        for frame in trange(n_frame):
+            lidar_dror_path = BASE_mod + date + '/' + format(seq, '04') + \
+                         "/labeled/lidar_points/lidar_dror/" + format(frame, '010') + ".npy"
+            lidar_dror = np.load(lidar_dror_path).reshape((-1, 4))[:, :3]
+
+            lidar2cam0 = Lidar2Cam(lidar_dror, T_IMG_CAM, T_CAM_LIDAR)
+            x = lidar2cam0[:, 0]
+            y = lidar2cam0[:, 1]
+            depth = lidar2cam0[:, 2]
+            points_cam0 = lidar_dror[np.logical_and.reduce((x >= 0, x < w, y >= 0, y < h, depth >= 0))]
+            project_cam0 = CropPoints(lidar2cam0)
+            lidar_dror_ProjectedKNN = points_cam0[
+                HPR_ProjectedKNN(points_cam0, project_cam0[:, :2], (h, w), K=51, alpha='mean')]
+
+            lidar_dror_ProjectedKNN_path = BASE_mod + date + '/' + format(seq, '04') + \
+                                          "/labeled/lidar_points/lidar_dror_ProjectedKNN/" + format(frame,
+                                                                                                   '010') + ".npy"
+            if not (os.path.exists(lidar_dror_ProjectedKNN_path[:-14])):
+                os.makedirs(lidar_dror_ProjectedKNN_path[:-14])
+            np.save(lidar_dror_ProjectedKNN_path, lidar_dror_ProjectedKNN)
 
     if generate_no_dynamic:
         for frame in trange(n_frame):

@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import numpy as np
 import torch
@@ -142,24 +142,26 @@ def train_evaluate(model, optimizer, scheduler, dataloader_train, dataloader_val
 if __name__ == '__main__':
     param = {
         'phase': 'train',
-        'rescaled': True,   # Attention!
-        'batch_size': 12,   # 3 if rescaled is False, 12 if True
+        'rescaled': False,   # Attention!
+        'batch_size': 3,   # 3 if rescaled is False, 12 if True
         'eval_n_crop': 4,
         'learning_rate': 1e-3,
         'momentum': 0.9,
         'weight_decay': 0,
-        'epochs': 40,
-        'mode': 'sord'   # sord, sord_ent_weighted, sord_min_local_ent, sord_weighted_minent, sord_align_grad, classification, regression, reg_of_cls
+        'epochs': 30,
+        'mode': 'sord'   # Attention!!  sord, sord_ent_weighted, sord_min_local_ent, sord_weighted_minent, sord_align_grad, classification, regression, reg_of_cls
     }
-    train_type = 'train'  # train, refine or continue
-    model_dir = 'refine_CADC_rescaled_seq_pseudo_Kitti_val_dror_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti'
+    train_type = 'continue'  # train, refine, continue, reset_decoder_refine_encoder, reset_decoder_freeze_encoder, reset_classifier_refine_backbone, reset_classifier_freeze_backbone
+    model_dir = 'reset_classifier_refine_backbone_CADC_seq_depth_dror_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_Kitti'
 
-    if train_type == 'refine':
+    if train_type in ['refine', 'reset_decoder_refine_encoder', 'reset_decoder_freeze_encoder', 'reset_classifier_refine_backbone', 'reset_classifier_freeze_backbone']:
         restore_file = 'experiments/train_lr_1e-03_momentum_0.9_wd_0_epoch_30_mode_sord_pretrained_DeepLabV3+_PascalVOC_crop_375*513/best.pth.tar'
     elif train_type == 'continue':
         restore_file = 'experiments/%s/last.pth.tar' % model_dir
+    elif train_type == 'train':
+        restore_file = None
 
-    model = net.get_model(param['mode'], pretrained=False)
+    model = net.get_model(param['mode'], pretrained=(True if train_type == 'train' else False))   # Attention!
     model.cuda()
 
     ## Pretrained on Pascal semantic segmentation, retrain on Kitti depth estimation
@@ -174,12 +176,26 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1)
 
     optimizer = torch.optim.SGD(params=model.parameters(), lr=param['learning_rate'], momentum=param['momentum'], weight_decay=param['weight_decay'], nesterov=True)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2)      # Attention!
 
     param['current_epoch'] = 0
     if restore_file is not None:
         if train_type == 'refine':
             load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
+        elif train_type == 'reset_decoder_refine_encoder':
+            load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
+            utils.reset_DeepLabV3plus_decoder(model)
+        elif train_type == 'reset_decoder_freeze_encoder':
+            load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
+            utils.freeze_DeepLabV3plus_encoder(model)
+            utils.reset_DeepLabV3plus_decoder(model)
+        elif train_type == 'reset_classifier_refine_backbone':
+            load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
+            utils.reset_DeepLabV3plus_classifier(model)
+        elif train_type == 'reset_classifier_freeze_backbone':
+            load_dict = utils.load_checkpoint(restore_file, model, optimizer=None, scheduler=None)
+            utils.freeze_DeepLabV3plus_backbone(model)
+            utils.reset_DeepLabV3plus_classifier(model)
         elif train_type == 'continue':
             load_dict = utils.load_checkpoint(restore_file, model, optimizer=optimizer, scheduler=scheduler)
             assert 'current_epoch' in load_dict, "current_epoch does not exist in restore file"
@@ -201,7 +217,7 @@ if __name__ == '__main__':
 
     # data_gen_train = DataGenerator('/home/datasets/Kitti/', phase=param['phase'])
     data_gen_train = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/',
-                                   phase='train_seq', cam=0, depth_mode='pseudo_Kitti', rescaled=param['rescaled'])
+                                   phase='train_seq', cam=0, depth_mode='dror', rescaled=param['rescaled'])      # Attention!
     print('train data size:', len(data_gen_train.dataset))
     param['train_depth_mode'] = data_gen_train.depth_mode
     dataloader_train = data_gen_train.create_data(batch_size=param['batch_size'])
@@ -211,7 +227,7 @@ if __name__ == '__main__':
 
     # data_gen_val = DataGenerator('/home/datasets/Kitti/', phase='test')
     data_gen_val = DataGenerator('/home/datasets/CADC/cadcd/', '/home/datasets_mod/CADC/cadcd/',
-                                 phase='val_seq', cam=0, depth_mode='dror', rescaled=param['rescaled'])
+                                 phase='val_seq', cam=0, depth_mode='dror', rescaled=param['rescaled'])      # Attention!
     print('val data size:', len(data_gen_val.dataset))
     param['val_depth_mode'] = data_gen_val.depth_mode
     dataloader_val = data_gen_val.create_data(batch_size=param['batch_size'])

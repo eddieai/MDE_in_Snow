@@ -1,6 +1,0 @@
-
-spython:S117"WRename this parameter "T_CAM_LIDAR" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ä‘õáüÿÿÿÿ
-mpython:S1542"PRename function "CropPoints" to match the regular expression ^[a-z_][a-z0-9_]*$.(õ¢êýûÿÿÿÿ
-qpython:S117"URename this parameter "T_IMG_CAM" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ä‘õáüÿÿÿÿ
-rpython:S1542"SRename function "GenerateDepth" to match the regular expression ^[a-z_][a-z0-9_]*$.(ÔÐ¶Ÿ8¡È™õ½.
-lpython:S1542"ORename function "Lidar2Cam" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ä‘õáüÿÿÿÿ

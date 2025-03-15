@@ -13,11 +13,12 @@ start_row = 0
 
 generate_Raw = False
 generate_DROR = False
-generate_aggregated_3 = True
-generate_aggregated = True
-generate_HPR_ProjectedKNN = True
-generate_HPR_ProjectedKNN_99 = True
-generate_HPR_ConvexHull = True
+generate_DROR_ProjectedKNN = True
+generate_aggregated_3 = False
+generate_aggregated = False
+generate_HPR_ProjectedKNN = False
+generate_HPR_ProjectedKNN_99 = False
+generate_HPR_ConvexHull = False
 generate_HPR_3DBox = False  # not yet relaunched after correcting dynamic object aggregation
 VISUALIZE = False
 ALL_CAM = False
@@ -91,6 +92,24 @@ for row in trange(start_row, len(cadc_stats)):
                     os.makedirs(depth_dror_path[:-14])
                 depth_dror_PIL = Image.fromarray(np.clip(depth_dror * 256., 0, 65535)).convert('I')
                 depth_dror_PIL.save(depth_dror_path, mode='I;16')
+
+            if generate_DROR_ProjectedKNN:
+                lidar_dror_ProjectedKNN_path = BASE_mod + date + '/' + format(seq, '04') + "/labeled/lidar_points/lidar_dror_ProjectedKNN/" + \
+                                  format(frame, '010') + ".npy"
+                lidar_dror_ProjectedKNN = np.load(lidar_dror_ProjectedKNN_path).reshape((-1, 3))
+                # Project points onto image
+                lidar_dror_ProjectedKNN_projected = Lidar2Cam(lidar_dror_ProjectedKNN, T_IMG_CAM[cam], T_CAM_LIDAR[cam])
+                # Crop points to image view field
+                lidar_dror_ProjectedKNN_cropped = CropPoints(lidar_dror_ProjectedKNN_projected)
+                # Generate depth map (H, W) from points (N, 3)
+                depth_dror_ProjectedKNN = GenerateDepth(lidar_dror_ProjectedKNN_cropped)
+                # Save depth map to PIL
+                depth_dror_ProjectedKNN_path = BASE_mod + date + '/' + format(seq, '04') + "/labeled/image_0" + str(cam) + \
+                                        "/depth_dror_ProjectedKNN/" + format(frame, '010') + ".png"
+                if not (os.path.exists(depth_dror_ProjectedKNN_path[:-14])):
+                    os.makedirs(depth_dror_ProjectedKNN_path[:-14])
+                depth_dror_ProjectedKNN_PIL = Image.fromarray(np.clip(depth_dror_ProjectedKNN * 256., 0, 65535)).convert('I')
+                depth_dror_ProjectedKNN_PIL.save(depth_dror_ProjectedKNN_path, mode='I;16')
 
             if generate_aggregated_3:
                 lidar_aggregate_path = BASE_mod + date + '/' + format(seq, '04') + \

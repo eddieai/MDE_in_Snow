@@ -1,8 +1,0 @@
-
-=python:S1253"Remove this commented out code.(«ıÛ–8ğ¯„Çå.
-kpython:S2208"GImport only needed names or import the module and then use its members.(Ûì±ƒúÿÿÿÿ8°ˆÀå.
-}python:S117"ZRename this local variable "scalarMap" to match the regular expression ^[_a-z][a-z0-9_]*$.(é¼Ğøÿÿÿÿ8ğ¯„Çå.
-Bpython:S125}"Remove this commented out code.(¶¾Êıÿÿÿÿ8ğ¯„Çå.
-Cpython:S125¤"Remove this commented out code.(¶¾Êıÿÿÿÿ8Ì’ŞÆå.
-qpython:S117"SRename this parameter "show_3D" to match the regular expression ^[_a-z][a-z0-9_]*$.(õ·—Å8ğ¯„Çå.
-Cpython:S125"Remove this commented out code.(ıéŞıüÿÿÿÿ8ğ¯„Çå.

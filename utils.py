@@ -4,6 +4,7 @@ import shutil
 import json
 import numpy as np
 import torch
+from torch import nn
 from net import b
 
 
@@ -182,6 +183,60 @@ def freeze_classification(model):
         weight.requires_grad = False
     for weight in model.reg_of_cls.parameters():
         weight.requires_grad = True
+    print("Params to learn:")
+    for name, weight in model.named_parameters():
+        if weight.requires_grad:
+            print("\t", name)
+
+
+def reset_DeepLabV3plus_decoder(model):
+    for m in model.classifier.project.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
+    for m in model.classifier.classifier.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
+
+
+def freeze_DeepLabV3plus_encoder(model):
+    for weight in model.parameters():
+        weight.requires_grad = True
+    for weight in model.backbone.parameters():
+        weight.requires_grad = False
+    for weight in model.classifier.aspp.parameters():
+        weight.requires_grad = False
+    print("Params to learn:")
+    for name, weight in model.named_parameters():
+        if weight.requires_grad:
+            print("\t", name)
+
+
+def reset_DeepLabV3plus_classifier(model):
+    for m in model.classifier.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
+
+
+def freeze_DeepLabV3plus_backbone(model):
+    for weight in model.parameters():
+        weight.requires_grad = True
+    for weight in model.backbone.parameters():
+        weight.requires_grad = False
     print("Params to learn:")
     for name, weight in model.named_parameters():
         if weight.requires_grad:

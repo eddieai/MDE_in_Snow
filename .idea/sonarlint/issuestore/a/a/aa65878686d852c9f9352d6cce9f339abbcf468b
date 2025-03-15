@@ -1,16 +1,0 @@
-
-6python:S125"Remove this commented out code.(àïİ½
-qpython:S3776"TRefactor this function to reduce its Cognitive Complexity from 22 to the 15 allowed.(¶çşÿÿÿÿ
-vpython:S117"ZRename this local variable "absImgNdx" to match the regular expression ^[_a-z][a-z0-9_]*$.(‡¼Äşÿÿÿÿ
-spython:S117."WRename this local variable "curVal" to match the regular expression ^[_a-z][a-z0-9_]*$.( ì±şúÿÿÿÿ
-}python:S117Z"aRename this local variable "denoisedDepthImg" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ë„âäøÿÿÿÿ
-opython:S117"SRename this parameter "grayImg" to match the regular expression ^[_a-z][a-z0-9_]*$.(¶çşÿÿÿÿ
-upython:S117"YRename this local variable "imgDepth" to match the regular expression ^[_a-z][a-z0-9_]*$.(Å÷½Àøÿÿÿÿ
-upython:S117"YRename this parameter "imgDepthInput" to match the regular expression ^[_a-z][a-z0-9_]*$.(¶çşÿÿÿÿ
-wpython:S117"[Rename this local variable "imgIsNoise" to match the regular expression ^[_a-z][a-z0-9_]*$.(”Ü•êÿÿÿÿÿ
-mpython:S117"VRename this local variable "indsM" to match the regular expression ^[_a-z][a-z0-9_]*$.(ãö‚÷
-ypython:S117"]Rename this local variable "knownValMask" to match the regular expression ^[_a-z][a-z0-9_]*$.(á©ç™ûÿÿÿÿ
-{python:S117"_Rename this local variable "maxImgAbsDepth" to match the regular expression ^[_a-z][a-z0-9_]*$.(î×Şûÿÿÿÿ
-qpython:S117!"URename this local variable "nWin" to match the regular expression ^[_a-z][a-z0-9_]*$.(ˆ¢Òˆüÿÿÿÿ
-spython:S117"WRename this local variable "numPix" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ó´—ùúÿÿÿÿ
-npython:S117"WRename this local variable "winRad" to match the regular expression ^[_a-z][a-z0-9_]*$.(åÊ¤
